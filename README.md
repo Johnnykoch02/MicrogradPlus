@@ -1,4 +1,5 @@
-# Micrograd_Plus README
+# MicrogradPlus 
+
 
 ## Introduction
 

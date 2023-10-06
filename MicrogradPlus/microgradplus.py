@@ -98,7 +98,18 @@ class NP_Value:
             out = NP_Value((1/l_base) * np.log(self.data), (self,), )
             
             def _backward():
-                self.grad += (1 / self.data * l_base) * out.grad
+                self.grad += (1 / (self.data * l_base)) * out.grad
+            out._backward = _backward
+            return out
+        
+        def mean(self,):
+            """
+            Returns mean(Self) along all dimensions
+            """
+            out = NP_Value(np.mean(self.data), (self,), )
+            n_elements = np.prod(self.data.shape)
+            def _backward():
+                self.grad += (1.0/n_elements) * np.ones_like(self.data) * out.grad
             out._backward = _backward
             return out
         
@@ -177,16 +188,27 @@ class NP_Value:
         def __repr__(self):
             return f"NP_Value(data={self.data}, grad={self.grad})"
         
+        @staticmethod
+        def build_topo(v, visited=set(),topo=[]):
+            """
+            Pass in visited (set) and topo(list) to recieve the topographic list
+            """
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    NP_Value.build_topo(child, visited, topo)
+                topo.append(v)
+                    
         def backward(self):
             """ Perform backpropagation to fill in Gradients """
             topo = []
             visited = set()
-            def build_topo(v):
-                if v not in visited:
-                    visited.add(v)
-                    for child in v._prev:
-                        build_topo(child)
-                    topo.append(v)
-            build_topo(self)
+            NP_Value.build_topo(self, visited=visited, topo=topo)
             self.grad = np.ones_like(self.data, dtype=float)
             [v._backward() for v in reversed(topo)]
+        
+        def get_computation_graph(self):
+            topo = []
+            visited = set()
+            NP_Value.build_topo(self, visited=visited, topo=topo)
+            return reversed(topo)

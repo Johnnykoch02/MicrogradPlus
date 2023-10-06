@@ -134,6 +134,31 @@ def test_sum():
     assert np.isclose(a.grad, a_torch.grad.numpy()).all()
     assert np.isclose(b.grad, b_torch.grad.numpy()).all()
 
+def test_mean():
+    a = NP_Value.rnorm((5, 5))
+    mean_a = a.mean()
+    mean_a.backward()
+    
+    a_torch = torch.as_tensor(a.data)
+    a_torch.requires_grad_()
+    mean_a_torch = torch.mean(a_torch)
+    mean_a_torch.backward()
+    assert np.isclose(a.grad, a_torch.grad.numpy()).all()
+
+def test_log():
+    a = NP_Value(np.random.rand(5, 5) + 1.0)
+    log_a = a.log()
+    b = log_a.mean()
+    b.backward()
+    
+    a_torch = torch.as_tensor(a.data)
+    a_torch.requires_grad_()
+    log_a_torch = torch.log2(a_torch)
+    b_torch = torch.mean(log_a_torch)
+    b_torch.backward()
+    
+    assert np.isclose(a.grad, a_torch.grad.numpy()).all()
+
 def run_tests():
     test_add()
     test_mul()
@@ -143,6 +168,8 @@ def run_tests():
     test_sigmoid()
     test_squeeze()
     test_sum()
+    test_mean()
+    test_log()
     print("All tests passed!")
 
 if __name__ == "__main__":
