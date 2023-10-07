@@ -30,5 +30,5 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with unittest
       run: |
-        python -m unittest discover -s MicrogradPlus_Tests/
+        python -m MicrogradPlus_Tests.microgradplus_test
 
