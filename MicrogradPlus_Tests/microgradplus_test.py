@@ -159,16 +159,16 @@ class MicrogradPlus_Tester(unittest.TestCase):
         assert np.isclose(a.grad, a_torch.grad.numpy()).all()
 
 def run_tests():
-    MicrogradPlus_UnitTester.test_add(None)
-    MicrogradPlus_UnitTester.test_mul(None)
-    MicrogradPlus_UnitTester.test_div(None)
-    MicrogradPlus_UnitTester.test_matmul(None)
-    MicrogradPlus_UnitTester.test_pow(None)
-    MicrogradPlus_UnitTester.test_sigmoid(None)
-    MicrogradPlus_UnitTester.test_squeeze(None)
-    MicrogradPlus_UnitTester.test_sum(None)
-    MicrogradPlus_UnitTester.test_mean(None)
-    MicrogradPlus_UnitTester.test_log(None)
+    MicrogradPlus_Tester.test_add(None)
+    MicrogradPlus_Tester.test_mul(None)
+    MicrogradPlus_Tester.test_div(None)
+    MicrogradPlus_Tester.test_matmul(None)
+    MicrogradPlus_Tester.test_pow(None)
+    MicrogradPlus_Tester.test_sigmoid(None)
+    MicrogradPlus_Tester.test_squeeze(None)
+    MicrogradPlus_Tester.test_sum(None)
+    MicrogradPlus_Tester.test_mean(None)
+    MicrogradPlus_Tester.test_log(None)
     print("All tests passed!")
 
 if __name__ == "__main__":
