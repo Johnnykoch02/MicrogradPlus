@@ -3,15 +3,20 @@ import numpy as np
 class NP_Value:
         """
         Modified from: https://github.com/karpathy/micrograd/blob/master/micrograd/engine.py   
+        Data: Union[Scalar[int, float], Array[np.array, list, iterable], NP_Value]
         """
         def __init__(self, data, _children=(), ):
             if isinstance(data, (int, float)):
                 data = [data]
-            self.data = np.array(data, dtype=float)
+                
+            self.data = np.array(data, dtype=float) if not isinstance(data, NP_Value) else data.data.copy()
             self.grad = np.zeros_like(self.data) # Initialize gradient to Zeros
             self._backward = lambda: None
             self._prev = set(_children)
         
+        def zero_grad(self):
+            self.grad = np.zeros_like(self.data) # Initialize gradient to Zeros
+            
         def sigmoid(self,):
             """
             Sigmoid(self) -> returns the sigmoid of the self.data
@@ -22,15 +27,31 @@ class NP_Value:
             out._backward = _backward
             return out
         
+        def softmax(self,):
+            """
+            Softmax(self) -> returns the softmax of the self.data [NOT IMPLEMENTED YET]
+            """
+            out = NP_Value(np.exp(self.data) / np.sum(np.exp(self.data)), (self,))
+            def _backward():
+                pass
+        
         def __add__(self, other):
             """
             Other: Union[NP_Value, Scalar/float]
             """
             other = other if isinstance(other, NP_Value) else NP_Value(other)
             out = NP_Value(self.data + other.data, (self, other), )
+            if self.data.shape != other.data.shape:
+                assert len(self.data.shape) >= len(other.data.shape), "NP_Value additive has more dimensions than allowed."
+                for i, j in zip(self.data.shape[::-1], other.data.shape[::-1]):
+                    assert i == j or j == 1, f"Dimensions are not compatible for broadcasting: {i} and {j}"
             def _backward():
                 self.grad += out.grad
-                other.grad += out.grad
+                if other.data.shape != self.data.shape:
+                    axis_to_sum = np.arange(len(self.data.shape) - len(other.data.shape))
+                    other.grad += np.sum(out.grad, axis=tuple(axis_to_sum))
+                else:
+                    other.grad += out.grad
             out._backward = _backward
             return out
         
@@ -46,6 +67,24 @@ class NP_Value:
             out._backward = _backward
             return out
         
+        def one_hot(self, num_classes):
+            """
+            One-hot encode a Value, used for probabilities
+            """
+            assert np.all(np.isclose(self.data, np.array(self.data, dtype=int))) and (self.data.shape[-1] == 1 or len(self.data.shape) == 1)
+            original_shape = self.data.shape
+            flat_data = self.data.ravel()
+            out_shape = original_shape[:-1] + (num_classes,)
+            flat_out_shape = np.prod(original_shape[:-1]) * num_classes
+            flat_out = np.zeros(shape=(flat_out_shape,), dtype=float)
+            for i in range(np.prod(original_shape[:-1]),):
+                idx = i*num_classes + int(flat_data[i])
+                flat_out[idx] = 1.0
+
+            # Reshape the flattened output to match the original shape
+            out = NP_Value(flat_out.reshape(out_shape))
+            return out
+            
         def __mul__(self, other):
             """
             Self * Other 
@@ -96,7 +135,6 @@ class NP_Value:
             """
             l_base = np.log(base)
             out = NP_Value((1/l_base) * np.log(self.data), (self,), )
-            
             def _backward():
                 self.grad += (1 / (self.data * l_base)) * out.grad
             out._backward = _backward
